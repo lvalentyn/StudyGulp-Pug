@@ -7,9 +7,11 @@ const sourcemaps = require('gulp-sourcemaps');
 const notify = require('gulp-notify');
 const plumber = require('gulp-plumber');
 const pug = require('gulp-pug');
-// Таска pug 
-gulp.task('pug', function () {
-	return gulp.src('./app/pug/pages/**/*.pug')
+const del = require('del');
+
+// Таск для сборки Gulp файлов
+gulp.task('pug', function (callback) {
+	return gulp.src('./src/pug/pages/**/*.pug')
 		.pipe(plumber({
 			errorHandler: notify.onError(function (err) {
 				return {
@@ -22,11 +24,14 @@ gulp.task('pug', function () {
 		.pipe(pug({
 			pretty: true
 		}))
-		.pipe(gulp.dest('./app/'))
+		.pipe(gulp.dest('./build/'))
+		.pipe(browserSync.stream())
+	callback();
 });
+
 // Таск для компиляции SCSS в CSS
 gulp.task('scss', function (callback) {
-	return gulp.src('./app/scss/main.scss')
+	return gulp.src('./src/scss/main.scss')
 		.pipe(plumber({
 			errorHandler: notify.onError(function (err) {
 				return {
@@ -42,33 +47,65 @@ gulp.task('scss', function (callback) {
 			overrideBrowserslist: ['last 4 versions']
 		}))
 		.pipe(sourcemaps.write())
-		.pipe(gulp.dest('./app/css/'))
+		.pipe(gulp.dest('./build/css/'))
+		.pipe(browserSync.stream())
 	callback();
 });
+
+// Копирование Изображений
+gulp.task('copy:img', function (callback) {
+	return gulp.src('./src/img/**/*.*')
+		.pipe(gulp.dest('./build/img/'))
+	callback();
+});
+
+// Копирование Скриптов
+gulp.task('copy:js', function (callback) {
+	return gulp.src('./src/js/**/*.*')
+		.pipe(gulp.dest('./build/js/'))
+	callback();
+});
+
 // Слежение за HTML и CSS и обновление браузера
 gulp.task('watch', function () {
-	function reload(done) {
-		browserSync.reload();
-		done();
-	}
-	// Слежение за HTML и CSS и обновление браузера
-	gulp.watch(['./app/*.html', './app/css/**/*.css'], gulp.parallel(reload));
-	// Слежение за SCSS и компиляция в CSS - обычный способ
-	// watch('./app/scss/**/*.scss', gulp.parallel('scss'));
-	// Запуск слежения и компиляции SCSS с задержкой, для жесктих дисков HDD
-	gulp.watch('./app/scss/**/*.scss', function () {
+
+	// Следим за картинками и скриптами и обновляем браузер
+	gulp.watch(['./build/js/**/*.*', './build/img/**/*.*'], gulp.parallel(browserSync.reload));
+
+	// Запуск слежения и компиляции SCSS с задержкой
+	gulp.watch('./src/scss/**/*.scss', function () {
 		setTimeout(gulp.parallel('scss'), 1000)
 	})
-	gulp.watch('./app/pug/**/*.pug', gulp.parallel('pug'));
+
+	// Слежение за PUG и сборка
+	gulp.watch('./src/pug/**/*.pug', gulp.parallel('pug'))
+
+	// Следим за картинками и скриптами, и копируем их в build
+	gulp.watch('./src/img/**/*.*', gulp.parallel('copy:img'))
+	gulp.watch('./src/js/**/*.*', gulp.parallel('copy:js'))
+
 });
+
 // Задача для старта сервера из папки app
 gulp.task('server', function () {
 	browserSync.init({
 		server: {
-			baseDir: "./app/"
+			baseDir: "./build/"
 		}
 	})
 });
+
+gulp.task('clean:build', function () {
+	return del('./build')
+});
+
 // Дефолтный таск (задача по умолчанию)
 // Запускаем одновременно задачи server и watch
-gulp.task('default', gulp.parallel('server', 'watch', 'scss', 'pug'));
+gulp.task(
+	'default',
+	gulp.series(
+		gulp.parallel('clean:build'),
+		gulp.parallel('scss', 'pug', 'copy:img', 'copy:js'),
+		gulp.parallel('server', 'watch'),
+	)
+);
