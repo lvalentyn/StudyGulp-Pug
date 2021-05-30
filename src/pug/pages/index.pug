@@ -8,13 +8,44 @@ html(lang="en")
         title Document
     body
 
-        header.header
-            h1 Header!!!
+        .card-holder
 
-        .content
-            h1 Content Hey!!!
+            //- Карточка
+            .card
+                .card__img
+                    img(src="img/products/apple-tv.jpg", alt="Apple TV")
+                .card__title
+                    | Apple TV
+                .card__price
+                    | $280
 
-        footer.footer
-            h1 Footer!!!
-        
+            //- Карточка
+            .card
+                .card__img
+                    img(src="img/products/apple-watch.jpg", alt="Apple Watch")
+                .card__title
+                    | Apple Watch
+                .card__price
+                    | $190
+
+
+            //- Карточка
+            .card
+                .card__img
+                    img(src="img/products/hifi.jpg", alt="HiFi колонка")
+                .card__title
+                    | HiFi колонка
+                .card__price
+                    | $90
+
+
+            //- Карточка
+            .card
+                .card__img
+                    img(src="img/products/tracker.jpg", alt="Фитнес трекер")
+                .card__title
+                    | Фитнес трекер
+                .card__price
+                    | $49
+
         script(src="js/main.js")
